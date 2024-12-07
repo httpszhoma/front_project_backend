@@ -3,6 +3,7 @@ package zhoma.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,36 +16,43 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
-
     private final AuthenticationProvider authenticationProvider;
-    private final JwtAuthenticationFilter filter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-
-    public SecurityConfiguration(AuthenticationProvider authenticationProvider, JwtAuthenticationFilter filter) {
+    public SecurityConfiguration(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            AuthenticationProvider authenticationProvider //ignore Bean warning we will get to that
+    ) {
         this.authenticationProvider = authenticationProvider;
-        this.filter = filter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception{
 
-        http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(
-                        authorize ->
-                                authorize.requestMatchers("/auth/**").permitAll()
-                                        .anyRequest().authenticated()
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+
+                        .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // Разрешить доступ с любых доменов
+        configuration.setAllowedOrigins(List.of("*"));//TODO: update backend url
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
@@ -52,6 +60,4 @@ public class SecurityConfiguration {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }
-

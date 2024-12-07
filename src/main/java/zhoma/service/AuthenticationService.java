@@ -52,6 +52,8 @@ public class AuthenticationService {
         if (!user.isEnabled()) {
             throw new RuntimeException("Account not verified. Please verify your account.");
         }
+        System.out.println(input.getEmail());
+        System.out.println(input.getPassword());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         input.getEmail(),
@@ -61,6 +63,7 @@ public class AuthenticationService {
 
         return user;
     }
+
     public void verifyUser(VerifyUserDto input) {
         Optional<User> optionalUser = userRepository.findByEmail(input.getEmail());
         if (optionalUser.isPresent()) {

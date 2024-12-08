@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import zhoma.dto.LoginUserDto;
 import zhoma.dto.RegisterUserDto;
 import zhoma.dto.VerifyUserDto;
+import zhoma.exceptions.*;
 import zhoma.models.User;
 import zhoma.repository.UserRepository;
 
@@ -37,6 +38,13 @@ public class AuthenticationService {
 
 
     public User signup(RegisterUserDto input) {
+        if (userRepository.findByEmail(input.getEmail()).isPresent()) {
+            throw new EmailAlreadyExist(input.getEmail());
+        }
+        if(userRepository.findByUsername(input.getUsername()).isPresent()){
+            throw new UsernameAlreadyExist(input.getUsername());
+        }
+
         User user = new User(input.getUsername(), input.getEmail(), passwordEncoder.encode(input.getPassword()));
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
@@ -47,10 +55,10 @@ public class AuthenticationService {
 
     public User authenticate(LoginUserDto input) {
         User user = userRepository.findByEmail(input.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EmailNotFoundException(input.getEmail()));
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("Account not verified. Please verify your account.");
+            throw new UserNotVerifiedException();
         }
         System.out.println(input.getEmail());
         System.out.println(input.getPassword());
@@ -66,10 +74,11 @@ public class AuthenticationService {
 
     public void verifyUser(VerifyUserDto input) {
         Optional<User> optionalUser = userRepository.findByEmail(input.getEmail());
+
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
-                throw new RuntimeException("Verification code has expired");
+                throw new VerificationCodeExpiredException(input.getEmail());
             }
             if (user.getVerificationCode().equals(input.getVerificationCode())) {
                 user.setEnabled(true);
@@ -80,7 +89,7 @@ public class AuthenticationService {
                 throw new RuntimeException("Invalid verification code");
             }
         } else {
-            throw new RuntimeException("User not found");
+            throw new EmailNotFoundException(input.getEmail());
         }
     }
 
@@ -96,7 +105,7 @@ public class AuthenticationService {
             sendVerificationEmail(user);
             userRepository.save(user);
         } else {
-            throw new RuntimeException("User not found");
+            throw new EmailNotFoundException(email);
         }
     }
 
@@ -119,8 +128,7 @@ public class AuthenticationService {
         try {
             emailService.sendVerificationEmail(user.getEmail(), subject, htmlMessage);
         } catch (MessagingException e) {
-            // Handle email sending exception
-            e.printStackTrace();
+           throw new EmailNotFoundException(user.getEmail());
         }
     }
     private String generateVerificationCode() {

@@ -8,9 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import zhoma.dto.SellerRequestForUserDto;
+import zhoma.models.SellerRequest;
 import zhoma.models.User;
+import zhoma.responses.UserResponseDto;
 import zhoma.service.UserService;
 
 import java.util.List;
@@ -30,20 +34,39 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Unauthorized, the user is not authenticated")
     })
     @GetMapping("/me")
-    public ResponseEntity<User> authenticatedUser() {
+    public ResponseEntity<UserResponseDto> authenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(currentUser);
+
+        String username = authentication.getName();
+
+        User currentUser = userService.getUserByUsername(username);
+        UserResponseDto responseDto = mapToUserResponseDto(currentUser);
+
+
+        return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "Get all users", description = "Fetches the list of all users in the system")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully fetched all users"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized, the user does not have access to this resource")
-    })
-    @GetMapping("/")
-    public ResponseEntity<List<User>> allUsers() {
-        List<User> users = userService.allUsers();
-        return ResponseEntity.ok(users);
+    private UserResponseDto mapToUserResponseDto(User user) {
+        return new UserResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getSellerRequests().stream()
+                        .map(this::mapToSellerRequestForUserDto)
+                        .toList()
+        );
     }
+
+    private SellerRequestForUserDto mapToSellerRequestForUserDto(SellerRequest request) {
+        return new SellerRequestForUserDto(
+                request.getId(),
+                request.getStatus().name()
+        );
+    }
+
+
+
+
+
 }

@@ -1,11 +1,11 @@
 package zhoma.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +13,8 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
+@JsonIgnoreProperties({"username", "email", "enabled", "verificationCode", "verificationCodeExpiresAt", "password", "sellerRequests"})
+
 public class User implements UserDetails {
 
     @Id
@@ -33,24 +35,27 @@ public class User implements UserDetails {
     @Column(name="verification_expiration")
     private LocalDateTime verificationCodeExpiresAt;
 
-
-
     @Column(nullable = false)
     private String password;
 
+    // Роль пользователя
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.ROLE_USER;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SellerRequest> sellerRequests;
 
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
     }
-    //default constructor
-    public User(){
-    }
+
+    public User(){}
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(() -> role.name());
     }
 
     @Override
@@ -63,6 +68,8 @@ public class User implements UserDetails {
         return username;
     }
 
+
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -71,7 +78,6 @@ public class User implements UserDetails {
     @Override
     public boolean isAccountNonLocked() {
         return true;
-
     }
 
     @Override

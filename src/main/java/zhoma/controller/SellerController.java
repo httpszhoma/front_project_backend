@@ -29,7 +29,7 @@ public class SellerController {
     private final ProductService productService;
 
     @PostMapping("/create")
-    public ResponseEntity<HashMap<String, Object>> createProduct(@ModelAttribute ProductRequestDto productRequestDto) {
+    public ResponseEntity<HashMap<String, Object>> createProduct(@RequestBody ProductRequestDto productRequestDto) {
         HashMap<String, Object> response = new HashMap<>();
         try {
             System.out.println(productRequestDto.toString());
@@ -69,38 +69,7 @@ public class SellerController {
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
-        try {
-            Product product = productService.getProductById(id);
-            ProductResponseDto productResponseDto = convertToDto(product);
-            return ResponseEntity.ok(productResponseDto);
-        } catch (Exception e) {
-            return ResponseEntity.status(404).body(null);
-        }
-    }
 
-    @GetMapping("/list")
-    public ResponseEntity<Page<ProductResponseDto>> getProducts(@RequestParam(defaultValue = "0") int page,
-                                                                @RequestParam(defaultValue = "20") int pageSize) {
-        try {
-            Page<Product> products = productService.getProducts(page, pageSize);
-            Page<ProductResponseDto> productResponseDtos = products.map(this::convertToDto);
-            return ResponseEntity.ok(productResponseDtos);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    @GetMapping("/count")
-    public ResponseEntity<Long> getCountOfProducts() {
-        try {
-            long count = productService.getCountOfProducts();
-            return ResponseEntity.ok(count);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(0L);
-        }
-    }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
@@ -141,4 +110,41 @@ public class SellerController {
 
         return responseDto;
     }
+
+    @PutMapping("/{id}/update")
+    public ResponseEntity<HashMap<String, Object>> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDto productRequestDto) {
+        HashMap<String, Object> response = new HashMap<>();
+        try {
+            // Call the service method to update the product
+            Product updatedProduct = productService.updateProduct(id, productRequestDto);
+
+            // Return the updated product's ID in the response
+            response.put("productId", updatedProduct.getId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Return an error message if something goes wrong
+            response.put("error", "Error updating product: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+
+    @PostMapping("{id}/updatefiles")
+    public ResponseEntity<HashMap<String, String>> updateProductFiles(@PathVariable Long id, @RequestParam("files") MultipartFile[] files) {
+        HashMap<String, String> response = new HashMap<>();
+        try {
+            Product product = productService.getProductById(id);
+
+            String result = productService.updateFiles(files, product);
+
+            response.put("message", result);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Error updating files: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+
+
 }

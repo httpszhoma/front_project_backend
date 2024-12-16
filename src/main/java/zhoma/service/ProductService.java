@@ -20,6 +20,10 @@ import zhoma.repository.BrandRepository;
 import zhoma.repository.CategoryRepository;
 import zhoma.repository.ProductRepository;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -68,7 +72,7 @@ public class ProductService {
                 imageUrl = azureBlobService.uploadImage(file.getOriginalFilename(), file.getInputStream(), file.getSize());
                 product.addImage(imageUrl);
                 // Add the image URL to the product
-                allUrl.append(imageUrl+ "\n");
+                allUrl.append(imageUrl).append("\n");
             }
 
             // Save the updated product with the added images
@@ -95,20 +99,50 @@ public class ProductService {
         return productRepository.count();
     }
 
-    public Product updateProduct(Long id, Product updatedProduct) {
-        Product existingProduct = productRepository.findById(id).orElse(null);
-        if (existingProduct != null) {
-            existingProduct.setName(updatedProduct.getName());
-            existingProduct.setDescription(updatedProduct.getDescription());
-            existingProduct.setPrice(updatedProduct.getPrice());
-            existingProduct.setStatus(updatedProduct.getStatus());
-            existingProduct.setQuantity(updatedProduct.getQuantity());
-            existingProduct.setCategoryEntity(updatedProduct.getCategoryEntity());
-            existingProduct.setBrandEntity(updatedProduct.getBrandEntity());
-            return productRepository.save(existingProduct);
+    public Product updateProduct(Long id, ProductRequestDto productRequestDto) {
+        // Fetch the product by ID
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFountException("Product not found"));
+
+        // Update the product's fields with the new data
+        product.setName(productRequestDto.getName());
+        product.setDescription(productRequestDto.getDescription());
+        product.setPrice(productRequestDto.getPrice());
+        product.setQuantity(productRequestDto.getQuantity());
+        product.setStatus(productRequestDto.getStatus());
+
+        // Update the category and brand
+        if (productRequestDto.getCategoryId() != null) {
+            Category category = categoryRepository.findCategoriesById(productRequestDto.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+            product.setCategoryEntity(category);
         }
-        return null;
+
+        if (productRequestDto.getBrandId() != null) {
+            Brand brand = brandRepository.findBrandById(productRequestDto.getBrandId())
+                    .orElseThrow(() -> new BrandNotFoundException("Brand not found"));
+            product.setBrandEntity(brand);
+        }
+
+        // Save the updated product
+        return productRepository.save(product);  // Return the updated product
     }
+
+
+    public String updateFiles(MultipartFile[] files, Product product) {
+        try {
+            for (ProductImage image : product.getImages()) {
+                azureBlobService.deleteFile(image.getImageUrl());  // Delete from Azure Blob Storage
+            }
+            product.getImages().clear();
+            String result = addFileProduct(files, product);
+            productRepository.save(product);
+            return "Product images updated successfully!";
+        } catch (Exception e) {
+            return "Error updating product images: " + e.getMessage();
+        }
+    }
+
 
     public String deleteProduct(Long id) {
         try {

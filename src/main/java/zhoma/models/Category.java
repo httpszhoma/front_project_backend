@@ -1,5 +1,6 @@
 package zhoma.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -19,6 +20,8 @@ public class Category {
     private String name;
 
     @OneToMany(mappedBy = "categoryEntity", cascade = CascadeType.ALL)
+    @JsonIgnore
+
     private List<Product> products;
 
     public Category() {}

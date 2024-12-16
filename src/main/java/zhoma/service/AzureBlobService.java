@@ -44,7 +44,10 @@ public class AzureBlobService {
         return blobClient.getBlobUrl();
     }
 
-    public void deleteFile(String fileName) {
+    public void deleteFile(String fileUrl) {
+        // Extract the file name from the URL (the part after the last '/')
+        String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+
         BlobContainerClient containerClient = new BlobContainerClientBuilder()
                 .connectionString(getConnectionString())
                 .containerName(containerName)
@@ -53,6 +56,7 @@ public class AzureBlobService {
         BlobClient blobClient = containerClient.getBlobClient(fileName);
         blobClient.delete();
     }
+
 
     private String getConnectionString() {
         return String.format(

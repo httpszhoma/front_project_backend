@@ -7,14 +7,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import zhoma.dto.SellerRequestForUserDto;
+import zhoma.models.Brand;
+import zhoma.models.Category;
 import zhoma.models.SellerRequest;
 import zhoma.models.User;
+import zhoma.repository.BrandRepository;
+import zhoma.repository.CategoryRepository;
+import zhoma.repository.ProductRepository;
 import zhoma.responses.UserResponseDto;
 import zhoma.responses.UserSellerResponseDto;
 import zhoma.service.SellerRequestService;
 import zhoma.service.UserService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin")
@@ -23,6 +30,76 @@ public class AdminController {
 
     private final UserService userService;
     private final SellerRequestService sellerRequestService;
+    private final CategoryRepository categoryRepository;
+    private final BrandRepository brandRepository;
+    private final ProductRepository productRepository;
+
+    @PostMapping("/create/brand")
+    public ResponseEntity<HashMap<String, Object>> createBrand(@RequestBody Brand brand) {
+        HashMap<String, Object> response = new HashMap<>();
+        try {
+            // Save the new brand
+            Brand savedBrand = brandRepository.save(brand);
+            response.put("brandId", savedBrand.getId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Error creating brand: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // Delete a brand by ID
+    @DeleteMapping("/delete/brand/{id}")
+    public ResponseEntity<HashMap<String, String>> deleteBrand(@PathVariable Long id) {
+        HashMap<String, String> response = new HashMap<>();
+        try {
+            Optional<Brand> brandOptional = brandRepository.findById(id);
+            if (brandOptional.isPresent()) {
+                brandRepository.deleteById(id);
+                response.put("message", "Brand deleted successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Brand not found");
+                return ResponseEntity.status(404).body(response);
+            }
+        } catch (Exception e) {
+            response.put("error", "Error deleting brand: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @PostMapping("/create/category")
+    public ResponseEntity<HashMap<String, Object>> createCategory(@RequestBody Category category) {
+        HashMap<String, Object> response = new HashMap<>();
+        try {
+            // Save the new category
+            Category savedCategory = categoryRepository.save(category);
+            response.put("categoryId", savedCategory.getId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", "Error creating category: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+    @DeleteMapping("/delete/category/{id}")
+    public ResponseEntity<HashMap<String, String>> deleteCategory(@PathVariable Long id) {
+        HashMap<String, String> response = new HashMap<>();
+        try {
+            Optional<Category> categoryOptional = categoryRepository.findById(id);
+            if (categoryOptional.isPresent()) {
+                categoryRepository.deleteById(id);
+                response.put("message", "Category deleted successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Category not found");
+                return ResponseEntity.status(404).body(response);
+            }
+        } catch (Exception e) {
+            response.put("error", "Error deleting category: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
 
     // Helper method to map User to UserResponseDto
     private UserResponseDto mapToUserResponseDto(User user) {
@@ -133,4 +210,6 @@ public class AdminController {
         UserResponseDto response = mapToUserResponseDto(user);
         return ResponseEntity.ok(response);
     }
+
+
 }

@@ -50,6 +50,29 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 
     }
+    @ExceptionHandler(ProductNotFountException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFount(ProductNotFountException ex){
+        ErrorResponse errorResponse = new ErrorResponse("Product error ", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+    }
+
+    @ExceptionHandler(BrandNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBrandNotFount(BrandNotFoundException ex){
+        ErrorResponse errorResponse = new ErrorResponse("Brand error ", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+
+    public ResponseEntity<ErrorResponse> handleCategoryNotFount(CategoryNotFoundException ex){
+        ErrorResponse errorResponse = new ErrorResponse("Category error ", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+    }
+
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleAllException(RuntimeException ex){
         ErrorResponse errorResponse = new ErrorResponse("Error", ex.getMessage());

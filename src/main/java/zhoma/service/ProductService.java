@@ -12,10 +12,7 @@ import zhoma.dto.ProductRequestDto;
 import zhoma.exceptions.BrandNotFoundException;
 import zhoma.exceptions.CategoryNotFoundException;
 import zhoma.exceptions.ProductNotFountException;
-import zhoma.models.Brand;
-import zhoma.models.Category;
-import zhoma.models.Product;
-import zhoma.models.ProductImage;
+import zhoma.models.*;
 import zhoma.repository.BrandRepository;
 import zhoma.repository.CategoryRepository;
 import zhoma.repository.ProductRepository;
@@ -37,7 +34,7 @@ public class ProductService {
 
 
     // Service: Create Product
-    public Long createProduct(ProductRequestDto productRequestDto) {
+    public Long createProduct(ProductRequestDto productRequestDto, User creater) {
         Brand brand = brandRepository
                 .findBrandById(productRequestDto.getBrandId())
                 .orElseThrow(() -> new BrandNotFoundException("This brand doesn't exist"));
@@ -55,6 +52,8 @@ public class ProductService {
         product.setQuantity(productRequestDto.getQuantity());
         product.setBrandEntity(brand);
         product.setCategoryEntity(category);
+        product.setCreator(creater);
+
 
         productRepository.save(product);
 
@@ -64,7 +63,7 @@ public class ProductService {
     // Service: Add files to Product
     public String addFileProduct(MultipartFile[] files, Product product) {
 
-       StringBuilder allUrl = new StringBuilder();
+        StringBuilder allUrl = new StringBuilder();
         String imageUrl = null;
         try {
             // Loop through the files and upload them
@@ -94,6 +93,11 @@ public class ProductService {
         Pageable pageable = PageRequest.of(page, pageSize);
         return productRepository.findAll(pageable);
     }
+    public Page<Product> getProductsByUser(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return productRepository.findByCreator(user, pageable);  // Поиск продуктов по пользователю
+    }
+
 
     public long getCountOfProducts() {
         return productRepository.count();

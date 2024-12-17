@@ -5,15 +5,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import zhoma.dto.ProductRequestDto;
+import zhoma.models.User;
 import zhoma.responses.ProductResponseDto;
 import zhoma.models.Product;
 import zhoma.service.ProductService;
 import zhoma.service.AzureBlobService;
 
 import lombok.RequiredArgsConstructor;
+import zhoma.service.UserService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,15 +32,21 @@ import java.util.stream.Collectors;
 public class SellerController {
 
     private final ProductService productService;
+    private final UserService userService;
 
     @PostMapping("/create")
     public ResponseEntity<HashMap<String, Object>> createProduct(@RequestBody ProductRequestDto productRequestDto) {
         HashMap<String, Object> response = new HashMap<>();
         try {
             System.out.println(productRequestDto.toString());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            String username = authentication.getName();
+
+            User currentUser = userService.getUserByUsername(username);
 
             // Call the service method to create the product
-            long productId = productService.createProduct(productRequestDto);  // Assuming this method returns productId
+            long productId = productService.createProduct(productRequestDto,currentUser);  // Assuming this method returns productId
 
             // On success, include the productId in the response
             response.put("productId", productId);

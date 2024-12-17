@@ -38,12 +38,18 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Product> productsCreated;
+
     // Роль пользователя
     @Enumerated(EnumType.STRING)
     private Role role = Role.ROLE_USER;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SellerRequest> sellerRequests;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Basket basket;
 
     public User(String username, String email, String password) {
         this.username = username;

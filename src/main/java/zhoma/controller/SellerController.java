@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/seller/products")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 
 public class SellerController {
 

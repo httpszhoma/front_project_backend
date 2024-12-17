@@ -13,6 +13,8 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@CrossOrigin("*")
+
 public class FileController {
 
     private final AzureBlobService azureBlobService;

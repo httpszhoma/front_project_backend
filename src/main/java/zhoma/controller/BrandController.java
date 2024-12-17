@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/seller/brands")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class BrandController {
 
     private final  BrandRepository brandRepository;

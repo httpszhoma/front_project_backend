@@ -16,6 +16,8 @@ import zhoma.service.JwtService;
 
 @RequestMapping("/auth")
 @RestController
+@CrossOrigin("*")
+
 public class AuthenticationController {
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;

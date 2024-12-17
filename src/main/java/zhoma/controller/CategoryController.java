@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/seller/categories")
 @RequiredArgsConstructor
+@CrossOrigin("*")
+
 public class CategoryController {
 
     private final CategoryRepository categoryRepository;

@@ -12,6 +12,7 @@ import zhoma.models.User;
 import zhoma.repository.BasketRepository;
 import zhoma.repository.ProductRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,23 @@ public class BasketService {
         basket.getItems().remove(item);
         basketRepository.save(basket);
     }
+    @Transactional
+    public void clearBasket(User user) {
+        Basket basket = getBasketForUser(user);
+
+        if (basket.getItems().isEmpty()) {
+            throw new RuntimeException("Basket is already empty");
+        }
+
+        // Iterate over each item and remove it separately
+        List<BasketItem> items = new ArrayList<>(basket.getItems()); // Create a copy to avoid concurrent modification
+        for (BasketItem item : items) {
+            removeProductFromBasket(user, item.getProduct().getId());
+        }
+    }
+
+
+
 
     @Transactional
     public void updateProductQuantities(User user, List<ProductQuantityUpdateDto> updates) {

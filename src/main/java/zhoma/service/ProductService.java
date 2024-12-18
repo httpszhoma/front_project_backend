@@ -39,9 +39,7 @@ public class ProductService {
                 .findBrandById(productRequestDto.getBrandId())
                 .orElseThrow(() -> new BrandNotFoundException("This brand doesn't exist"));
 
-        Category category = categoryRepository
-                .findCategoriesById(productRequestDto.getCategoryId())
-                .orElseThrow(() -> new CategoryNotFoundException("This category doesn't exist"));
+        Category category = brand.getCategory();
 
         // Create product and save it
         Product product = new Product();

@@ -154,14 +154,14 @@ public class AdminController {
     // Helper method to map SellerRequest to UserSellerResponseDto
     private UserSellerResponseDto mapToUserSellerResponseDto(SellerRequest request) {
         return new UserSellerResponseDto(
-                request.getId(),
-                request.getUser().getRole().name(),
-                request.getUser().getId(),
-                request.getUser().getEmail(),
-                request.getUser().getUsername(),
-                request.getCreatedAt()
+                request.getUser().getId(), // User ID
+                request.getUser().getEmail(), // Email
+                request.getUser().getUsername(), // Username
+                request.getCreatedAt(), // Created at timestamp
+                request.getDescription() // Description of the request
         );
     }
+
 
     @Operation(summary = "Get all users", description = "Fetches the list of all users in the system")
     @ApiResponses(value = {

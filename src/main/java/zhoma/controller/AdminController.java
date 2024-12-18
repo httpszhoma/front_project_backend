@@ -131,12 +131,15 @@ public class AdminController {
     private UserResponseDto mapToUserResponseDto(User user) {
         return new UserResponseDto(
                 user.getId(),
+                user.getFirstname(),
+                user.getLastname(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getRole().name(),
                 user.getSellerRequests().stream()
                         .map(this::mapToSellerRequestForUserDto)
-                        .toList()
+                        .toList(),
+                user.getImageUrl()
         );
     }
 

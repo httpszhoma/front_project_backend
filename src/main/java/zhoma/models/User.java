@@ -20,6 +20,8 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String firstname;
+    private String lastname;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -32,7 +34,7 @@ public class User implements UserDetails {
     @Column(name = "verification_code")
     private String verificationCode;
 
-    @Column(name="verification_expiration")
+    @Column(name = "verification_expiration")
     private LocalDateTime verificationCodeExpiresAt;
 
     @Column(nullable = false)
@@ -55,7 +57,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "buyer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Order> orders;
 
-
+    private String imageUrl;
 
     public User(String username, String email, String password) {
         this.username = username;
@@ -63,7 +65,8 @@ public class User implements UserDetails {
         this.password = password;
     }
 
-    public User(){}
+    public User() {
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -79,7 +82,6 @@ public class User implements UserDetails {
     public String getUsername() {
         return username;
     }
-
 
 
     @Override

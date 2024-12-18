@@ -1,8 +1,10 @@
 package zhoma.service;
 
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -60,4 +62,15 @@ public class UserService implements UserDetailsService {
         return List.of(new SimpleGrantedAuthority(role.name())); // Предполагается, что `Role` — это Enum
     }
 
+    public User saveUser(User currentUser) {
+        return userRepository.save(currentUser);
+    }
+
+    public User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = getUserByUsername(username);
+        return currentUser;
+
+    }
 }

@@ -19,9 +19,11 @@ public class Category {
     @Column(nullable = false)
     private String name;
 
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Brand> brands;
+
     @OneToMany(mappedBy = "categoryEntity", cascade = CascadeType.ALL)
     @JsonIgnore
-
     private List<Product> products;
 
     public Category() {}

@@ -8,9 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import zhoma.exceptions.BrandNotFoundException;
+import zhoma.exceptions.CategoryNotFoundException;
 import zhoma.models.Brand;
+import zhoma.models.Category;
 import zhoma.models.Product;
 import zhoma.repository.BrandRepository;
+import zhoma.repository.CategoryRepository;
 import zhoma.repository.ProductRepository;
 import zhoma.responses.ProductResponseDto;
 
@@ -20,14 +23,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/seller/brands")
+@RequestMapping("/brands")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class BrandController {
 
     private final  BrandRepository brandRepository;
     private final ProductRepository productRepository;
-
+    private final CategoryRepository categoryRepository;
 
 
 
@@ -58,34 +61,36 @@ public class BrandController {
 
 
     // Get products by brand ID with pagination
-    @GetMapping("/{brandId}/products")
-    public ResponseEntity<Page<ProductResponseDto>> getProductsByBrandId(
+    @GetMapping("/{categoryId}/{brandId}/products")
+    public ResponseEntity<Page<ProductResponseDto>> getProductsByCategoryAndBrand(
+            @PathVariable Long categoryId,
             @PathVariable Long brandId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
         try {
+            // Find the category by ID
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new CategoryNotFoundException("This category doesn't exist!"));
+
             // Find the brand by ID
-            Optional<Brand> brandOptional = brandRepository.findById(brandId);
-            if (brandOptional.isPresent()) {
-                Brand brand = brandOptional.get();
+            Brand brand = brandRepository.findById(brandId)
+                    .orElseThrow(() -> new BrandNotFoundException("This brand doesn't exist!"));
 
-                // Create a Pageable object for pagination
-                Pageable pageable = PageRequest.of(page, pageSize);
+            // Create a Pageable object for pagination
+            Pageable pageable = PageRequest.of(page, pageSize);
 
-                // Fetch the products belonging to the given brand with pagination
-                Page<Product> products = productRepository.findByBrandEntity(brand, pageable);
-                Page<ProductResponseDto> productResponseDtos = products.map(this::convertToDto);
+            // Fetch the products belonging to the given category and brand with pagination
+            Page<Product> products = productRepository.findByCategoryEntityAndBrandEntity(category, brand, pageable);
+            Page<ProductResponseDto> productResponseDtos = products.map(this::convertToDto);
 
-
-
-                return ResponseEntity.ok(productResponseDtos);
-            } else {
-                return ResponseEntity.status(404).body(null);
-            }
+            return ResponseEntity.ok(productResponseDtos);
+        } catch (CategoryNotFoundException | BrandNotFoundException e) {
+            return ResponseEntity.status(404).body(null);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }
     }
+
 
     private ProductResponseDto convertToDto(Product product) {
         ProductResponseDto responseDto = new ProductResponseDto();

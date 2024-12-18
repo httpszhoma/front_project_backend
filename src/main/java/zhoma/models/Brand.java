@@ -19,13 +19,19 @@ public class Brand {
     @Column(nullable = false)
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnore
+    private Category category;
+
     @OneToMany(mappedBy = "brandEntity", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Product> products;
 
     public Brand() {}
 
-    public Brand(String name) {
+    public Brand(String name, Category category) {
         this.name = name;
+        this.category = category;
     }
 }

@@ -6,7 +6,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import zhoma.dto.BrandCreateDto;
+import zhoma.dto.CategoryCreateDto;
 import zhoma.dto.SellerRequestForUserDto;
+import zhoma.exceptions.CategoryNotFoundException;
 import zhoma.models.Brand;
 import zhoma.models.Category;
 import zhoma.models.SellerRequest;
@@ -36,18 +39,32 @@ public class AdminController {
     private final ProductRepository productRepository;
 
     @PostMapping("/create/brand")
-    public ResponseEntity<HashMap<String, Object>> createBrand(@RequestBody Brand brand) {
+    public ResponseEntity<HashMap<String, Object>> createBrand(@RequestBody BrandCreateDto brandDto) {
         HashMap<String, Object> response = new HashMap<>();
         try {
-            // Save the new brand
+            // Find the category by ID
+            Category category = categoryRepository.findById(brandDto.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found!"));
+
+            // Create a new Brand entity
+            Brand brand = new Brand();
+            brand.setName(brandDto.getName());
+            brand.setCategory(category);
+
+            // Save the brand
             Brand savedBrand = brandRepository.save(brand);
             response.put("brandId", savedBrand.getId());
+            response.put("message", "Brand created successfully!");
             return ResponseEntity.ok(response);
+        } catch (CategoryNotFoundException e) {
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(404).body(response);
         } catch (Exception e) {
             response.put("error", "Error creating brand: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }
+
 
     // Delete a brand by ID
     @DeleteMapping("/delete/brand/{id}")
@@ -70,18 +87,26 @@ public class AdminController {
     }
 
     @PostMapping("/create/category")
-    public ResponseEntity<HashMap<String, Object>> createCategory(@RequestBody Category category) {
+    public ResponseEntity<HashMap<String, Object>> createCategory(@RequestBody CategoryCreateDto categoryDto) {
         HashMap<String, Object> response = new HashMap<>();
         try {
+            // Create a new Category entity
+            Category category = new Category();
+            category.setName(categoryDto.getName());
+
             // Save the new category
             Category savedCategory = categoryRepository.save(category);
+
+            // Prepare response
             response.put("categoryId", savedCategory.getId());
+            response.put("message", "Category created successfully!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("error", "Error creating category: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }
+
     @DeleteMapping("/delete/category/{id}")
     public ResponseEntity<HashMap<String, String>> deleteCategory(@PathVariable Long id) {
         HashMap<String, String> response = new HashMap<>();

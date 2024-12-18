@@ -19,34 +19,34 @@ public class FileController {
 
     private final AzureBlobService azureBlobService;
 
-    // Эндпоинт для загрузки файла
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadFiles(@RequestParam("files") MultipartFile[] files) {
-        StringBuilder uploadedUrls = new StringBuilder();
-
-        try {
-            for (MultipartFile file : files) {
-                InputStream inputStream = file.getInputStream();
-                String imageUrl = azureBlobService.uploadImage(file.getOriginalFilename(), inputStream, file.getSize());
-                uploadedUrls.append(imageUrl).append("\n"); // Добавляем URL каждого загруженного файла
-            }
-
-            return ResponseEntity.ok("Images uploaded successfully. URLs: \n" + uploadedUrls.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    // Эндпоинт для удаления файла
-    @DeleteMapping("/delete/{fileName}")
-    public ResponseEntity<String> deleteFile(@PathVariable String fileName) {
-        try {
-            azureBlobService.deleteFile(fileName);
-            return ResponseEntity.ok("File deleted successfully.");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Failed to delete file: " + e.getMessage());
-        }
-    }
+//    // Эндпоинт для загрузки файла
+//    @PostMapping("/upload")
+//    public ResponseEntity<String> uploadFiles(@RequestParam("files") MultipartFile[] files) {
+//        StringBuilder uploadedUrls = new StringBuilder();
+//
+//        try {
+//            for (MultipartFile file : files) {
+//                InputStream inputStream = file.getInputStream();
+//                String imageUrl = azureBlobService.uploadImage(file.getOriginalFilename(), inputStream, file.getSize());
+//                uploadedUrls.append(imageUrl).append("\n"); // Добавляем URL каждого загруженного файла
+//            }
+//
+//            return ResponseEntity.ok("Images uploaded successfully. URLs: \n" + uploadedUrls.toString());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
+//
+//    // Эндпоинт для удаления файла
+//    @DeleteMapping("/delete/{fileName}")
+//    public ResponseEntity<String> deleteFile(@PathVariable String fileName) {
+//        try {
+//            azureBlobService.deleteFile(fileName);
+//            return ResponseEntity.ok("File deleted successfully.");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body("Failed to delete file: " + e.getMessage());
+//        }
+//    }
 }
 

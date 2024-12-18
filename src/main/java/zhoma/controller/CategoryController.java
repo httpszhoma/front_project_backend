@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import zhoma.exceptions.CategoryNotFoundException;
+import zhoma.models.Brand;
 import zhoma.models.Category;
 import zhoma.models.Product;
 import zhoma.repository.CategoryRepository;
@@ -20,7 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/seller/categories")
+@RequestMapping("/categories")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 
@@ -51,6 +52,32 @@ public class CategoryController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
+    @GetMapping("/{categoryId}/brands")
+    public ResponseEntity<HashMap<Long, String>> getBrandsByCategoryId(@PathVariable Long categoryId) {
+        try {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new CategoryNotFoundException("This category doesn't exist!"));
+
+            HashMap<Long, String> brandMap = category.getBrands().stream()
+                    .collect(Collectors.toMap(
+                            Brand::getId,
+                            Brand::getName,
+                            (existing, replacement) -> existing,
+                            HashMap::new
+                    ));
+
+            return ResponseEntity.ok(brandMap);
+        } catch (CategoryNotFoundException e) {
+            return ResponseEntity.status(404).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+
+
+
 
     // Get products by category ID with pagination
     @GetMapping("/{categoryId}/products")

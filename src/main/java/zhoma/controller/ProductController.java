@@ -2,12 +2,16 @@ package zhoma.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import zhoma.models.Product;
+import zhoma.repository.ProductRepository;
 import zhoma.responses.ProductResponseDto;
 import zhoma.service.ProductService;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +24,7 @@ public class ProductController {
 
 
     private final ProductService productService;
+    private final ProductRepository productRepository;
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
         Product product = productService.getProductById(id);
@@ -39,6 +44,8 @@ public class ProductController {
         }
     }
 
+
+
     @GetMapping("/count")
     public ResponseEntity<Long> getCountOfProducts() {
         try {
@@ -48,6 +55,43 @@ public class ProductController {
             return ResponseEntity.status(500).body(0L);
         }
     }
+
+    @GetMapping("/search/price")
+    public ResponseEntity<Page<ProductResponseDto>> getProductsByPriceRange(
+            @RequestParam("minPrice") double minPrice,
+            @RequestParam("maxPrice") double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Product> products = productRepository.findByPriceRange(minPrice, maxPrice, pageable);
+
+        Page<ProductResponseDto> productDtos = products.map(this::convertToDto);
+
+        return ResponseEntity.ok(productDtos);
+    }
+
+
+
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<Page<ProductResponseDto>> getProductsByKeyword(
+            @PathVariable("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Product> products = productRepository.searchByKeyword(keyword, pageable);
+
+        Page<ProductResponseDto> productDtos = products.map(this::convertToDto);
+
+        return ResponseEntity.ok(productDtos);
+    }
+
+
+
+
 
     private ProductResponseDto convertToDto(Product product) {
         ProductResponseDto responseDto = new ProductResponseDto();
@@ -82,4 +126,6 @@ public class ProductController {
 
         return responseDto;
     }
+
+
 }

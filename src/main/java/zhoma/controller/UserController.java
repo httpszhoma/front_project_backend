@@ -16,6 +16,7 @@ import zhoma.models.SellerRequest;
 import zhoma.models.User;
 import zhoma.responses.ProductResponseDto;
 import zhoma.responses.UserResponseDto;
+import zhoma.service.OrderService;
 import zhoma.service.ProductService;
 import zhoma.service.UserService;
 
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 public class UserController {
     private final UserService userService;
     private final ProductService productService;
+    private final OrderService orderService;
 
 
     @Operation(summary = "Get authenticated user", description = "Fetches the details of the currently authenticated user")
@@ -36,7 +38,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "Successfully fetched authenticated user details"),
             @ApiResponse(responseCode = "401", description = "Unauthorized, the user is not authenticated")
     })
-    @GetMapping("/me")
+    @GetMapping("/profile")
     public ResponseEntity<UserResponseDto> authenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

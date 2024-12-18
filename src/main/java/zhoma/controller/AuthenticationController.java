@@ -14,6 +14,8 @@ import zhoma.responses.LoginResponse;
 import zhoma.service.AuthenticationService;
 import zhoma.service.JwtService;
 
+import java.util.HashMap;
+
 @RequestMapping("/auth")
 @RestController
 @CrossOrigin("*")
@@ -80,4 +82,54 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/forgot/password")
+    @Operation(summary = "Send password reset code", description = "Sends a password reset verification code to the user's email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification code sent"),
+            @ApiResponse(responseCode = "400", description = "Email not found or an error occurred")
+    })
+    public ResponseEntity<?> sendForgotPasswordCode(@RequestParam String email) {
+        try {
+            authenticationService.sendForgotPasswordCode(email);
+            return ResponseEntity.ok("Verification code sent to your email.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/forgot/password/verify")
+    @Operation(summary = "Verify password reset code", description = "Verifies the password reset verification code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification code verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired verification code")
+    })
+    public ResponseEntity<?> verifyForgotPasswordCode(
+            @RequestParam String email,
+            @RequestParam String verificationCode) {
+        try {
+            authenticationService.verifyForgotPasswordCode(email, verificationCode);
+            return ResponseEntity.ok("Verification code verified successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset/password")
+    @Operation(summary = "Reset password", description = "Resets the user's password after verification")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input or unverified verification code")
+    })
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String email,
+            @RequestParam String newPassword) {
+        try {
+            authenticationService.resetPassword(email, newPassword);
+            return ResponseEntity.ok("Password reset successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }

@@ -136,4 +136,45 @@ public class AuthenticationService {
         int code = random.nextInt(9000) + 1000;
         return String.valueOf(code);
     }
+
+    public void sendForgotPasswordCode(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EmailNotFoundException( email));
+
+        user.setVerificationCode(generateVerificationCode());
+        user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
+        sendVerificationEmail(user); // Reuse existing email sending logic
+        userRepository.save(user);
+    }
+
+    public void verifyForgotPasswordCode(String email, String verificationCode) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EmailNotFoundException("Email not found: " + email));
+
+        if (user.getVerificationCode() == null ||
+                !user.getVerificationCode().equals(verificationCode) ||
+                user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Invalid or expired verification code.");
+        }
+
+        // Mark the verification as successful by clearing the code
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
+        userRepository.save(user);
+    }
+
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EmailNotFoundException("Email not found: " + email));
+
+        // Ensure the verification code was cleared during verification
+        if (user.getVerificationCode() != null) {
+            throw new RuntimeException("Verification code not verified.");
+        }
+
+        // Update the password and save the user
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
 }

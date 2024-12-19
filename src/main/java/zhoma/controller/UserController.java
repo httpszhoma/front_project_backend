@@ -96,6 +96,10 @@ public class UserController {
 
             String imageUrl;
             try (InputStream inputStream = imageFile.getInputStream()) {
+                User user = userService.getAuthenticatedUser();
+                if(user.getImageUrl()!=null)
+                    azureBlobService.deleteFile(user.getImageUrl());
+
                 imageUrl = azureBlobService.uploadImage(imageFile.getOriginalFilename(), inputStream, imageFile.getSize());
             } catch (IOException e) {
                 throw new RuntimeException(e);

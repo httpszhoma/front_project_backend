@@ -72,6 +72,18 @@ public class ProductController {
         return ResponseEntity.ok(productDtos);
     }
 
+    @GetMapping("/get/minmax/price")
+    public ResponseEntity<HashMap<String, Double>> getMinMaxPrice() {
+        double minPrice = productRepository.getMinPrice();
+        double maxPrice = productRepository.getMaxPrice();
+
+        HashMap<String, Double> priceMap = new HashMap<>();
+        priceMap.put("minPrice", minPrice);
+        priceMap.put("maxPrice", maxPrice);
+
+        return ResponseEntity.ok(priceMap);
+    }
+
 
 
     @GetMapping("/search/{keyword}")

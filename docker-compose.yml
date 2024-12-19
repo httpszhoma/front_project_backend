@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: postgres          # Username
+      POSTGRES_PASSWORD: zhoma005      # Password
+      POSTGRES_DB: front_project_db    # Database name
+    ports:
+      - "5432:5432"                    # Expose port 5432 to the host machine
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

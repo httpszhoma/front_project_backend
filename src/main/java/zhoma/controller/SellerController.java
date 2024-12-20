@@ -9,8 +9,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import zhoma.dto.OrderItemDto;
+import zhoma.dto.OrderResponseDto;
 import zhoma.dto.ProductRequestDto;
+import zhoma.models.Order;
 import zhoma.models.User;
+import zhoma.repository.OrderRepository;
 import zhoma.responses.ProductResponseDto;
 import zhoma.models.Product;
 import zhoma.service.ProductService;
@@ -33,6 +37,7 @@ public class SellerController {
 
     private final ProductService productService;
     private final UserService userService;
+    private final OrderRepository orderRepository;
 
     @PostMapping("/create")
     public ResponseEntity<HashMap<String, Object>> createProduct(@RequestBody ProductRequestDto productRequestDto) {
@@ -126,14 +131,11 @@ public class SellerController {
     public ResponseEntity<HashMap<String, Object>> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDto productRequestDto) {
         HashMap<String, Object> response = new HashMap<>();
         try {
-            // Call the service method to update the product
             Product updatedProduct = productService.updateProduct(id, productRequestDto);
 
-            // Return the updated product's ID in the response
             response.put("productId", updatedProduct.getId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // Return an error message if something goes wrong
             response.put("error", "Error updating product: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
@@ -155,7 +157,65 @@ public class SellerController {
             return ResponseEntity.status(500).body(response);
         }
     }
+    @GetMapping("/myproduct/orders")
+    public ResponseEntity<List<OrderResponseDto>> getProductOrders() {
+        User user = userService.getAuthenticatedUser();
 
+        List<Order> orders = orderRepository.findMyProductsOrders(user.getId());
+
+        List<OrderResponseDto> orderResponseDtos = orders.stream()
+                .map(order -> {
+                    // Map each order to the DTO
+                    List<OrderItemDto> orderItemDtos = order.getItems().stream()
+                            .filter(orderItem -> orderItem.getSeller().getId().equals(user.getId())) // Filter order items to ensure it's from the seller
+                            .map(orderItem -> {
+                                // Map each order item to OrderItemDto
+                                return new OrderItemDto(
+                                        orderItem.getProduct().getId(),
+                                        orderItem.getProduct().getName(),
+                                        orderItem.getQuantity(),
+                                        orderItem.getPrice(),
+                                        orderItem.getSubtotal(),
+                                        orderItem.getProduct().getBrandEntity().getName(),
+                                        orderItem.getProduct().getImages().isEmpty() ? "" : orderItem.getProduct().getImages().get(0).getImageUrl() // assuming first image
+                                );
+                            }).collect(Collectors.toList());
+
+                    return new OrderResponseDto(
+                            order.getId(),
+                            order.getBuyer().getId(),
+                            order.getStatus(),
+                            order.getOrderDate().toString(),
+                            orderItemDtos,
+                            order.calculateTotalPrice()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // Step 4: Return the response
+        return ResponseEntity.ok(orderResponseDtos);
+    }
+
+    @GetMapping("/myproducts")
+    public ResponseEntity<Page<ProductResponseDto>> getMyProducts(@RequestParam(defaultValue = "0") int page,
+                                                                  @RequestParam(defaultValue = "20") int pageSize) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User currentUser = userService.getUserByUsername(username);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(404).body(null);  // Если пользователь не найден
+        }
+
+        try {
+            Page<Product> products = productService.getProductsByUser(currentUser, page, pageSize);
+            Page<ProductResponseDto> productResponseDtos = products.map(this::convertToDto);
+            return ResponseEntity.ok(productResponseDtos);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);  // Ошибка сервера
+        }
+    }
 
 
 }

@@ -50,6 +50,7 @@ public class SellerRequestService {
         User user = request.getUser();
 
         user.setRole(zhoma.models.Role.ROLE_SELLER);
+
         userRepository.save(user);
     }
 

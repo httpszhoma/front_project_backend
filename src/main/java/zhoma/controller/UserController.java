@@ -123,26 +123,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "Successfully fetched products added by the authenticated user"),
             @ApiResponse(responseCode = "401", description = "Unauthorized, the user is not authenticated")
     })
-    @GetMapping("/myproducts")
-    public ResponseEntity<Page<ProductResponseDto>> getMyProducts(@RequestParam(defaultValue = "0") int page,
-                                                                  @RequestParam(defaultValue = "20") int pageSize) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
 
-        User currentUser = userService.getUserByUsername(username);
-
-        if (currentUser == null) {
-            return ResponseEntity.status(404).body(null);  // Если пользователь не найден
-        }
-
-        try {
-            Page<Product> products = productService.getProductsByUser(currentUser, page, pageSize);
-            Page<ProductResponseDto> productResponseDtos = products.map(this::convertToDto);
-            return ResponseEntity.ok(productResponseDtos);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);  // Ошибка сервера
-        }
-    }
 
 
     private UserResponseDto mapToUserResponseDto(User user) {

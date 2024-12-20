@@ -34,20 +34,21 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()  // Используйте requestMatchers
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/products/list").permitAll()
-                        .requestMatchers("/admin/allUser").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                        .requestMatchers("/products/**").permitAll()
+                        .requestMatchers("/categories/**").permitAll()
+                        .requestMatchers("/brands/**").permitAll()
+                        .requestMatchers("/seller/**").hasAuthority("ROLE_SELLER")
                         .anyRequest().authenticated()
-
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // Добавляем фильтр для JWT
+
+        http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);  // Добавляем кастомный фильтр CORS
 
         return http.build();
     }

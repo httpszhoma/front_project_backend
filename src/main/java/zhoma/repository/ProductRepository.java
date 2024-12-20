@@ -19,6 +19,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByCategoryEntity(Category category, Pageable pageable);
         Page<Product> findByCreator(User creator, Pageable pageable);
 
+
+
     Page<Product> findByCategoryEntityAndBrandEntity(Category category, Brand brand, Pageable pageable);
 
 

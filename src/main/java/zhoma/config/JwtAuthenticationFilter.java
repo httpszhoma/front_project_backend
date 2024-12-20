@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import zhoma.service.JwtService;
@@ -26,6 +27,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userDetailsService;
+
+    private static final String[] PUBLIC_URIS = {
+            "/swagger-ui/**", "/v3/api-docs/**", "/auth/**", "/products/**", "/categories/**", "/brands/**"
+    };
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
@@ -43,13 +48,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (isPublicUri(request)) {
             filterChain.doFilter(request, response);
             return;
         }
+        final String authHeader = request.getHeader("Authorization");
 
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Unauthorized: Token is missing");
+            return;
+        }
         try {
             final String jwt = authHeader.substring(7);
             final String username = jwtService.extractUsername(jwt);
@@ -77,5 +87,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
+    }
+
+    private boolean isPublicUri(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        AntPathMatcher pathMatcher = new AntPathMatcher();  // Используем AntPathMatcher
+
+        for (String publicUri : PUBLIC_URIS) {
+            if (pathMatcher.match(publicUri, uri)) {  // Проверяем соответствие пути
+                return true;
+            }
+        }
+        return false;
     }
 }

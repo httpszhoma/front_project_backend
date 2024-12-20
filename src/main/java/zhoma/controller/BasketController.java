@@ -65,6 +65,12 @@ public class BasketController {
         basketService.updateProductQuantities(currentUser, updates);
         return ResponseEntity.ok("Product quantities updated");
     }
+    @DeleteMapping("/deleteAll")
+    public ResponseEntity<String> removeProductFromBasket() {
+        User currentUser = getCurrentUser();
+        basketService.removeAllProductFromBasket(currentUser);
+        return ResponseEntity.ok("Product removed from basket");
+    }
 
 
 }

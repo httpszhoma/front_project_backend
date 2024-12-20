@@ -69,6 +69,14 @@ public class BasketService {
         basket.getItems().remove(item);
         basketRepository.save(basket);
     }
+
+    @Transactional
+    public void removeAllProductFromBasket(User user) {
+        Basket basket = getBasketForUser(user);
+
+        basket.getItems().clear();
+        basketRepository.save(basket);
+    }
     @Transactional
     public void clearBasket(User user) {
         Basket basket = getBasketForUser(user);

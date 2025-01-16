@@ -1,5 +1,6 @@
 package zhoma.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,8 @@ import zhoma.service.JwtService;
 import zhoma.service.UserService;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -98,17 +101,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         if (jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
-            // Генерация нового токена доступа
             String newAccessToken = jwtService.generateToken(userDetails);
 
-            // Установка нового access токена в заголовок ответа
-            response.setHeader("Access-Token", newAccessToken);
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("accessToken", newAccessToken);
+            responseBody.put("expiresIn", String.valueOf(jwtService.getExpirationTime()));
+
+            response.setContentType("application/json");
             response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write("New access token generated successfully");
+
+            String jsonResponse = new ObjectMapper().writeValueAsString(responseBody);
+            response.getWriter().write(jsonResponse);
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Invalid refresh token");
         }
+
     }
 
     private boolean isPublicUri(HttpServletRequest request) {

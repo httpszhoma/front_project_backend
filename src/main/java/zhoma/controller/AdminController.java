@@ -142,7 +142,7 @@ public class AdminController {
                 user.getImageUrl()
         );
     }
-
+// mapstruct or create class which convert
     // Helper method to map SellerRequest to SellerRequestForUserDto
     private SellerRequestForUserDto mapToSellerRequestForUserDto(SellerRequest request) {
         return new SellerRequestForUserDto(

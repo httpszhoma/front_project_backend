@@ -1,6 +1,5 @@
 package zhoma.config;
 
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,7 +9,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -24,7 +22,6 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final HandlerExceptionResolver handlerExceptionResolver;
-
     private final JwtService jwtService;
     private final UserService userDetailsService;
 
@@ -48,53 +45,78 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
         if (isPublicUri(request)) {
             filterChain.doFilter(request, response);
             return;
         }
+
         final String authHeader = request.getHeader("Authorization");
+        final String refreshHeader = request.getHeader("Refresh-Token"); // Для рефреш токена
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Token is missing");
-            return;
-        }
         try {
-            final String jwt = authHeader.substring(7);
-            final String username = jwtService.extractUsername(jwt);
-
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-            if (username != null && authentication == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-
-
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                handleAccessToken(request, response, filterChain, authHeader);
+            } else if (refreshHeader != null) {
+                handleRefreshToken(request, response, refreshHeader);
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Unauthorized: Token is missing");
             }
-
-            filterChain.doFilter(request, response);
         } catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }
 
+    private void handleAccessToken(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String authHeader) throws ServletException, IOException {
+        final String jwt = authHeader.substring(7);
+        final String username = jwtService.extractUsername(jwt);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (username != null && authentication == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private void handleRefreshToken(HttpServletRequest request, HttpServletResponse response, String refreshHeader) throws IOException {
+        final String refreshToken = refreshHeader;
+
+        String username = jwtService.extractUsername(refreshToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
+            // Генерация нового токена доступа
+            String newAccessToken = jwtService.generateToken(userDetails);
+
+            // Установка нового access токена в заголовок ответа
+            response.setHeader("Access-Token", newAccessToken);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("New access token generated successfully");
+        } else {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid refresh token");
+        }
+    }
+
     private boolean isPublicUri(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        AntPathMatcher pathMatcher = new AntPathMatcher();  // Используем AntPathMatcher
+        AntPathMatcher pathMatcher = new AntPathMatcher();
 
         for (String publicUri : PUBLIC_URIS) {
-            if (pathMatcher.match(publicUri, uri)) {  // Проверяем соответствие пути
+            if (pathMatcher.match(publicUri, uri)) {
                 return true;
             }
         }

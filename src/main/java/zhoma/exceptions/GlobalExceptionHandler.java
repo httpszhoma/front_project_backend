@@ -79,6 +79,14 @@ public class GlobalExceptionHandler {
 
     }
 
+    @ExceptionHandler(TokenInvalidException.class)
+
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(TokenInvalidException ex){
+        ErrorResponse errorResponse = new ErrorResponse("Token error ", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+
+    }
+
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleAllException(RuntimeException ex){

@@ -2,17 +2,18 @@ package zhoma.dto;
 
 
 import lombok.Data;
+@Data
+public class BasketItemDto
 
-public record BasketItemDto (
-    // record
-     Long productId,
-     String productName,
-     int quantity,
-     double price,
-     double totalPrice,
-     String brand,
-     String productImage
 
-){
+{
+
+    private Long productId;
+    private  String productName;
+    private  int quantity;
+    private  double price;
+    private double totalPrice;
+    private String brand;
+    private String productImage;
 
 }

@@ -48,9 +48,10 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails, jwtExpiration);
     }
+
     public String refreshAccessToken(String refreshToken) {
         String username = extractUsername(refreshToken);
-        User user = userRepository.findByUsername(username).orElseThrow(()->
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException(username));
         if (!isRefreshTokenValid(refreshToken, user)) {
             throw new TokenInvalidException("Refresh token is invalid");
@@ -94,11 +95,11 @@ public class JwtService {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
-    public boolean isRefreshTokenValid(String refreshToken,UserDetails userDetails){
+
+    public boolean isRefreshTokenValid(String refreshToken, UserDetails userDetails) {
         final String username = extractUsername(refreshToken);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(refreshToken);
     }
-
 
 
     private boolean isTokenExpired(String token) {
